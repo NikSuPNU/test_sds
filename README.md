@@ -314,13 +314,40 @@ def find_consecutive(arr_: list) -> list:
 ```python
 find_consecutive(arr_)
 ```
-
-
-
-
     [[1, 3], [7, 9], [11, 12]]
 
+``` sql
+-- Нумеруем порядковыми номерами столбцы
+WITH temp AS (
+    SELECT
+        ID AS id,
+        ROW_NUMBER() OVER (ORDER BY id) AS real_id
+    FROM dbo.Table_1
+),
 
+-- Считаем дельту
+temp_2 AS (
+    SELECT
+        id,
+        real_id,
+        id - real_id AS delta
+    FROM temp
+),
+
+-- Группируем и агрегируем массив
+temp_3 AS (
+    SELECT
+        JSON_ARRAYAGG(id) AS res
+    FROM temp_2
+    GROUP BY delta
+)
+
+-- Извлекаем первый и последний элемент из каждого JSON-массива
+SELECT
+    JSON_UNQUOTE(JSON_EXTRACT(res, '$[0]')) AS first_id,
+    JSON_UNQUOTE(JSON_EXTRACT(res, CONCAT('$[', JSON_LENGTH(res) - 1, ']'))) AS last_id
+FROM temp_3;
+```
 
 ## Python
 
